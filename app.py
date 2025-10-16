@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
 from langchain_core.prompts import PromptTemplate
 import chromadb
-from sentence_transformers import SentenceTransformer
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from langchain_core.output_parsers import StrOutputParser
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -40,7 +40,7 @@ chain = prompt1 | model | parser
 # Initialize ChromaDB and embedding model
 client = chromadb.PersistentClient(path="chroma_db")
 data_collection = client.get_collection('Uni_collection')
-embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
 
 @app.route('/')
 def index():
@@ -62,7 +62,7 @@ def chat():
             return jsonify({'error': 'No message provided'}), 400
         
         # Embed the query
-        embedded_query = embedding_model.encode(user_input).tolist()
+        embedded_query = embeddings.embed_query(user_input).tolist()
         
         # Query ChromaDB
         data = data_collection.query(query_embeddings=embedded_query,n_results=7)
@@ -83,7 +83,7 @@ def chat():
         chat_history.append(HumanMessage(content=prompt.format(thing=user_input)))
         chat_history.append(AIMessage(content=result))
         
-        embedded_response = embedding_model.encode([result]).tolist()
+        embedded_response = embeddings.embed_query([result]).tolist()
         ids = [f"doc_response_{len(chat_history)}"]
         data_collection.add(
             embeddings=embedded_response,
