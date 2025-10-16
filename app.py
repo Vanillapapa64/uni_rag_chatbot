@@ -63,7 +63,7 @@ def chat():
             return jsonify({'error': 'No message provided'}), 400
         
         # Embed the query
-        embedded_query = embeddings.embed_query(user_input).tolist()
+        embedded_query = embeddings.embed_query(user_input)
         
         # Query ChromaDB
         data = data_collection.query(query_embeddings=embedded_query,n_results=7)
@@ -84,7 +84,7 @@ def chat():
         chat_history.append(HumanMessage(content=prompt.format(thing=user_input)))
         chat_history.append(AIMessage(content=result))
         
-        embedded_response = embeddings.embed_query([result]).tolist()
+        embedded_response = embeddings.embed_query([result])
         ids = [f"doc_response_{len(chat_history)}"]
         data_collection.add(
             embeddings=embedded_response,
