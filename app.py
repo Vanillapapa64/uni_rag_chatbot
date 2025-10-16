@@ -48,7 +48,7 @@ def index():
 
 @app.route('/chat', methods=['POST', 'OPTIONS'])
 def chat():
-    
+    print('hello world')
     if request.method == 'OPTIONS':
         
         response = jsonify({'status': 'ok'})
@@ -106,6 +106,7 @@ def chat():
         })
     
     except Exception as e:
+        print(e)
         return jsonify({'error': str(e)}), 500
 
 @app.route('/history', methods=['GET', 'OPTIONS'])
