@@ -40,7 +40,7 @@ chain = prompt1 | model | parser
 # Initialize ChromaDB and embedding model
 client = chromadb.PersistentClient(path="chroma_db")
 data_collection = client.get_collection('Uni_collection')
-embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
+embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001-small")
 
 @app.route('/')
 def index():
