@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chat Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 800px;
+            height: 90vh;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .clear-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .clear-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 16px;
+            display: flex;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            word-wrap: break-word;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.assistant .message-content {
+            background: white;
+            color: #333;
+            border: 1px solid #e0e0e0;
+            border-bottom-left-radius: 4px;
+            line-height: 1.6;
+        }
+
+        .message-content strong {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .message-content ul, .message-content ol {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+
+        .message-content li {
+            margin: 4px 0;
+        }
+
+        .message-content p {
+            margin: 8px 0;
+        }
+
+        .message-content code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        .message-content pre {
+            background: #f4f4f4;
+            padding: 12px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 8px 0;
+        }
+
+        .message-content pre code {
+            background: none;
+            padding: 0;
+        }
+
+        .message-role {
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            opacity: 0.7;
+        }
+
+        .message.user .message-role {
+            text-align: right;
+            color: #667eea;
+        }
+
+        .message.assistant .message-role {
+            color: #764ba2;
+        }
+
+        .chat-input-container {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .chat-input-form {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .chat-input:focus {
+            border-color: #667eea;
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .send-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: flex;
+            gap: 4px;
+            padding: 12px 16px;
+        }
+
+        .loading span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #667eea;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .loading span:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .loading span:nth-child(2) {
+            animation-delay: -0.16s;
+        }
+
+        @keyframes bounce {
+            0%, 80%, 100% {
+                transform: scale(0);
+            }
+            40% {
+                transform: scale(1);
+            }
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 20px;
+            border-left: 4px solid #c33;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #764ba2;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <h1>🤖 AI Chat Assistant</h1>
+            <button class="clear-btn" onclick="clearHistory()">Clear Chat</button>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="message assistant">
+                <div>
+                    <div class="message-role">Assistant</div>
+                    <div class="message-content">
+                        Hello! I'm your AI assistant. Ask me anything about the university!
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chat-input-container">
+            <form class="chat-input-form" onsubmit="sendMessage(event)">
+                <input 
+                    type="text" 
+                    class="chat-input" 
+                    id="messageInput" 
+                    placeholder="Type your message here..."
+                    autocomplete="off"
+                    required
+                >
+                <button type="submit" class="send-btn" id="sendBtn">Send</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const chatMessages = document.getElementById('chatMessages');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+
+        function scrollToBottom() {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function addMessage(role, content) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role}`;
+            
+            // Use markdown parsing for assistant messages, escape HTML for user messages
+            const formattedContent = role === 'assistant' ? parseMarkdown(content) : escapeHtml(content);
+            
+            messageDiv.innerHTML = `
+                <div>
+                    <div class="message-role">${role === 'user' ? 'You' : 'Assistant'}</div>
+                    <div class="message-content">${formattedContent}</div>
+                </div>
+            `;
+            
+            chatMessages.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        function showLoading() {
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'message assistant';
+            loadingDiv.id = 'loadingMessage';
+            loadingDiv.innerHTML = `
+                <div>
+                    <div class="message-role">Assistant</div>
+                    <div class="message-content">
+                        <div class="loading">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            chatMessages.appendChild(loadingDiv);
+            scrollToBottom();
+        }
+
+        function removeLoading() {
+            const loadingMsg = document.getElementById('loadingMessage');
+            if (loadingMsg) {
+                loadingMsg.remove();
+            }
+        }
+
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            errorDiv.textContent = `Error: ${message}`;
+            chatMessages.appendChild(errorDiv);
+            scrollToBottom();
+            setTimeout(() => errorDiv.remove(), 5001);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function parseMarkdown(text) {
+            // Escape HTML first
+            text = text.replace(/&/g, '&amp;')
+                       .replace(/</g, '&lt;')
+                       .replace(/>/g, '&gt;');
+            
+            // Bold text: **text** or __text__
+            text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                       .replace(/__(.*?)__/g, '<strong>$1</strong>');
+            
+            // Italic text: *text* or _text_
+            text = text.replace(/\*(.*?)\*/g, '<em>$1</em>')
+                       .replace(/_(.*?)_/g, '<em>$1</em>');
+            
+            // Code blocks: ```code```
+            text = text.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+            
+            // Inline code: `code`
+            text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+            
+            // Convert bullet points
+            const lines = text.split('\n');
+            let inList = false;
+            let html = '';
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                
+                // Check if line is a bullet point
+                if (line.match(/^[\*\-\+]\s+/)) {
+                    if (!inList) {
+                        html += '<ul>';
+                        inList = true;
+                    }
+                    const content = line.replace(/^[\*\-\+]\s+/, '');
+                    html += `<li>${content}</li>`;
+                }
+                // Check if line is a numbered list
+                else if (line.match(/^\d+\.\s+/)) {
+                    if (!inList) {
+                        html += '<ol>';
+                        inList = true;
+                    }
+                    const content = line.replace(/^\d+\.\s+/, '');
+                    html += `<li>${content}</li>`;
+                } else {
+                    if (inList) {
+                        // Check if previous list was ul or ol
+                        if (html.lastIndexOf('<ul>') > html.lastIndexOf('<ol>')) {
+                            html += '</ul>';
+                        } else {
+                            html += '</ol>';
+                        }
+                        inList = false;
+                    }
+                    if (line.length > 0) {
+                        html += `<p>${line}</p>`;
+                    } else if (i < lines.length - 1) {
+                        html += '<br>';
+                    }
+                }
+            }
+            
+            // Close any remaining list
+            if (inList) {
+                if (html.lastIndexOf('<ul>') > html.lastIndexOf('<ol>')) {
+                    html += '</ul>';
+                } else {
+                    html += '</ol>';
+                }
+            }
+            
+            // Remove empty paragraphs
+            html = html.replace(/<p><\/p>/g, '');
+            
+            return html;
+        }
+
+        async function sendMessage(event) {
+            event.preventDefault();
+            
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            // Add user message
+            addMessage('user', message);
+            messageInput.value = '';
+            sendBtn.disabled = true;
+            
+            // Show loading
+            showLoading();
+
+            try {
+                const response = await fetch('http://localhost:5001/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: message })
+                });
+
+                removeLoading();
+
+                if (!response.ok) {
+                    throw new Error('Failed to get response');
+                }
+
+                const data = await response.json();
+                
+                if (data.error) {
+                    showError(data.error);
+                } else {
+                    addMessage('assistant', data.response);
+                }
+            } catch (error) {
+                removeLoading();
+                showError(error.message);
+            } finally {
+                sendBtn.disabled = false;
+                messageInput.focus();
+            }
+        }
+
+        async function clearHistory() {
+            if (!confirm('Are you sure you want to clear the chat history?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:5001/clear', {
+                    method: 'POST',
+                });
+
+                if (response.ok) {
+                    chatMessages.innerHTML = `
+                        <div class="message assistant">
+                            <div>
+                                <div class="message-role">Assistant</div>
+                                <div class="message-content">
+                                    Chat history cleared! How can I help you?
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                showError('Failed to clear history');
+            }
+        }
+
+        // Load history on page load
+        async function loadHistory() {
+            try {
+                const response = await fetch('http://localhost:5001/history');
+                const data = await response.json();
+                
+                if (data.history && data.history.length > 0) {
+                    chatMessages.innerHTML = '';
+                    data.history.forEach(msg => {
+                        if (msg.role !== 'system') {
+                            addMessage(msg.role === 'user' ? 'user' : 'assistant', msg.content);
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to load history:', error);
+            }
+        }
+
+        // Focus input on load
+        window.onload = () => {
+            messageInput.focus();
+            loadHistory();
+        };
+    </script>
+</body>
+</html>
