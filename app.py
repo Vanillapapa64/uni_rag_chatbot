@@ -63,7 +63,7 @@ def chat():
             return jsonify({'error': 'No message provided'}), 400
         
         # Embed the query
-        embedded_query = embeddings.embed_query(user_input)
+        embedded_query = embeddings.embed_query(user_input,output_dimensionality=384)
         
         # Query ChromaDB
         data = data_collection.query(query_embeddings=embedded_query,n_results=7)
