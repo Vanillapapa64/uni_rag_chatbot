@@ -466,7 +466,7 @@
             showLoading();
 
             try {
-                const response = await fetch('http://localhost:5001/chat', {
+                const response = await fetch('https://unibackend.navkirat.in:5000/chat', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -502,7 +502,7 @@
             }
 
             try {
-                const response = await fetch('http://localhost:5001/clear', {
+                const response = await fetch('https://unibackend.navkirat.in:5000/clear', {
                     method: 'POST',
                 });
 
@@ -526,7 +526,7 @@
         // Load history on page load
         async function loadHistory() {
             try {
-                const response = await fetch('http://localhost:5001/history');
+                const response = await fetch('https://unibackend.navkirat.in:5000/history');
                 const data = await response.json();
                 
                 if (data.history && data.history.length > 0) {
