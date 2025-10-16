@@ -98,7 +98,7 @@ def chat():
                 history.append({'role': 'user', 'content': msg.content})
             elif isinstance(msg, AIMessage):
                 history.append({'role': 'assistant', 'content': msg.content})
-        print(result)
+        print(response)
         return jsonify({
             'response': result,
             'history': history
