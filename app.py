@@ -48,7 +48,9 @@ def index():
 
 @app.route('/chat', methods=['POST', 'OPTIONS'])
 def chat():
+    
     if request.method == 'OPTIONS':
+        
         response = jsonify({'status': 'ok'})
         response.headers.add('Access-Control-Allow-Origin', '*')
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
@@ -57,7 +59,6 @@ def chat():
     
     try:
         user_input = request.json.get('message', '')
-        
         if not user_input:
             return jsonify({'error': 'No message provided'}), 400
         
