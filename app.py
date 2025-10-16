@@ -84,13 +84,6 @@ def chat():
         chat_history.append(HumanMessage(content=prompt.format(thing=user_input)))
         chat_history.append(AIMessage(content=result))
         
-        embedded_response = embeddings.embed_query([result])
-        ids = [f"doc_response_{len(chat_history)}"]
-        data_collection.add(
-            embeddings=embedded_response,
-            documents=[result],
-            ids=ids
-        )
 
         # Format history for frontend
         history = []
