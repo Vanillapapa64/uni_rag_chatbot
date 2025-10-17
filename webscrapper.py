@@ -26,11 +26,8 @@ def safe_metadata_extractor(raw_html, url, response):
     return {"source": url, "title": title}
 def content_type_filter(response):
     return response.headers.get("Content-Type", "").startswith("text/html")
-loader = RecursiveUrlLoader(
-    "https://online.gndu.ac.in/departments.aspx",
-    max_depth=2,
-    extractor=bs4_extractor,
-    metadata_extractor=safe_metadata_extractor
+loader = WebBaseLoader(
+    "https://en.wikipedia.org/wiki/Guru_Nanak_Dev_University"
 )
 # Wont be using recurive loader, My laptop is on fucking fireee
 # loader = WebBaseLoader(

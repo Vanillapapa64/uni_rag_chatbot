@@ -1,8 +1,8 @@
 from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
 from langchain_core.prompts import PromptTemplate
+from sentence_transformers import SentenceTransformer
 import chromadb
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_core.messages import SystemMessage, HumanMessage, AIMessage
 from langchain_core.output_parsers import StrOutputParser
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -25,14 +25,20 @@ prompt = PromptTemplate(
 
 prompt1 = PromptTemplate(
     template=(
-        "You are a helpful assistant.\n"
-        "Conversation so far:\n{context}\n\n"
-        "Relevant university data:\n{data}\n\n"
-        "User query:\n{query}\n\n"
-        "Now give a helpful, concise, and factual answer."
+        "You are a friendly and knowledgeable university assistant.\n"
+        "Here’s the conversation so far:\n{context}\n\n"
+        "Here’s the relevant university data:\n{data}\n\n"
+        "User's latest queries:\n{query}\n\n"
+        "Now, based on all of the above, answer naturally and clearly:\n"
+        "- Avoid repeating the same sentence structure.\n"
+        "- If you already mentioned a detail earlier, summarize instead of restating.\n"
+        "- Give short, well-formatted bullet points when listing options.\n"
+        "- Use conversational tone (e.g., 'You can also consider...', 'Another good choice is...').\n"
+        "- Always end your response with a helpful next step or offer to help further."
     ),
     input_variables=["context", "data", "query"]
 )
+
 
 parser = StrOutputParser()
 chain = prompt1 | model | parser
@@ -40,7 +46,8 @@ chain = prompt1 | model | parser
 # Initialize ChromaDB and embedding model
 client = chromadb.PersistentClient(path="chroma_db")
 data_collection = client.get_collection('Uni_collection')
-embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
+# embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
+embedding_model=SentenceTransformer("all-MiniLM-L6-v2")
 
 @app.route('/')
 def index():
@@ -63,20 +70,29 @@ def chat():
             return jsonify({'error': 'No message provided'}), 400
         
         # Embed the query
-        embedded_query = embeddings.embed_query(user_input,output_dimensionality=384)
-        
+        # embedded_query = embeddings.embed_query(user_input,output_dimensionality=384)
+        embedded_query=embedding_model.encode(user_input).tolist()
         # Query ChromaDB
         data = data_collection.query(query_embeddings=embedded_query,n_results=7)
+        print(data["documents"][0][0])
         data_docs = data["documents"][0]
         text = "".join(data_docs)
-        print(text)
+        # print(text)
         # Build context from chat history
         context_text = "\n".join([f"{m.type}: {m.content}" for m in chat_history])
-        
+        # Rewrite the user query into 2-3 concise variations using the model + parser
+        rewrite_prompt = PromptTemplate(
+            template="Rewrite the following user query into 2-3 short, clear variations:\n\n{query}",
+            input_variables=["query"]
+        )
+        rewrite_chain = rewrite_prompt | model | parser
+        better_query = rewrite_chain.invoke({"query": user_input})
+        if not isinstance(better_query, str):
+            better_query = str(better_query)
         # Get AI response
         result = chain.invoke({
             'context': context_text,
-            'query': user_input,
+            'query': better_query,
             'data': text
         })
         
